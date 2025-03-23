@@ -52,17 +52,36 @@ class PropertyCard extends StatelessWidget {
                         // Add message functionality here
                       },
                       style: TextButton.styleFrom(
-                        backgroundColor: Colors.green, // Set background color to green
-                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8), // Adjust padding
+                        backgroundColor: Colors.green,
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8), // Optional: Add rounded corners
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                       child: Text(
                         'Message',
-                        style: TextStyle(color: Colors.white), // Set text color to white
+                        style: TextStyle(color: Colors.white),
                       ),
                     ),
+                    TextButton(
+                      onPressed: () {
+                        // Add detail functionality here
+                      },
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Details',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+
                     IconButton(
                       icon: Icon(Icons.favorite_border, color: Colors.deepOrange),
                       onPressed: () {
