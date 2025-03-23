@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "931939488310",
+    "project_id": "nestmate-ee5a8",
+    "storage_bucket": "nestmate-ee5a8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:931939488310:android:c5666bf954d8d81d527e97",
+        "android_client_info": {
+          "package_name": "com.example.nest_mate"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZj0aHNnkyAdRLkqdfSbZDbKb9YFGSmvw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
