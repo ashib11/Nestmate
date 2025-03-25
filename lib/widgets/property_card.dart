@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/property.dart';
+import '../providers/favorites_provider.dart';
 
 class PropertyCard extends StatelessWidget {
   final Property property;
@@ -8,6 +10,8 @@ class PropertyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final favoritesProvider = Provider.of<FavoritesProvider>(context);
+
     return Card(
       margin: EdgeInsets.all(8.0),
       child: Column(
@@ -31,7 +35,7 @@ class PropertyCard extends StatelessWidget {
                 SizedBox(height: 4),
                 Text(
                   property.price,
-                  style: TextStyle(fontSize: 16, color: Colors.green,fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 16, color: Colors.green, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 4),
                 Text(
@@ -81,11 +85,19 @@ class PropertyCard extends StatelessWidget {
                         ),
                       ),
                     ),
-
                     IconButton(
-                      icon: Icon(Icons.favorite_border, color: Colors.deepOrange),
+                      icon: Icon(
+                        favoritesProvider.isFavorite(property)
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color: Colors.deepOrange,
+                      ),
                       onPressed: () {
-                        // Add favorite functionality here
+                        if (favoritesProvider.isFavorite(property)) {
+                          favoritesProvider.removeFromFavorites(property);
+                        } else {
+                          favoritesProvider.addToFavorites(property);
+                        }
                       },
                     ),
                   ],
