@@ -1,6 +1,15 @@
 class Property {
-  final String imageUrl, location, price, availability;
-  final int bedroom, bathroom, balcony, kitchen;
+  final String imageUrl;
+  final String location;
+  final String price;
+  final String availability;
+  final int bedroom;
+  final int bathroom;
+  final int balcony;
+  final int kitchen;
+  final String userName;
+  final String userImage;
+  final DateTime postTime;
 
   Property({
     required this.imageUrl,
@@ -11,5 +20,8 @@ class Property {
     required this.bathroom,
     required this.balcony,
     required this.kitchen,
+    required this.userName,
+    required this.userImage,
+    required this.postTime,
   });
 }

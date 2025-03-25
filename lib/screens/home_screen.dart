@@ -33,6 +33,9 @@ class _HomeScreenState extends State<HomeScreen> {
       bathroom: 1,
       balcony: 1,
       kitchen: 1,
+      userName: 'Sadia Sultana Enami',
+      userImage: 'assets/profile1.jpg',
+      postTime: DateTime.now().subtract(Duration(minutes: 21)),
     ),
     Property(
       imageUrl: 'assets/aprtmnt2.jpg.jpeg',
@@ -43,6 +46,9 @@ class _HomeScreenState extends State<HomeScreen> {
       bathroom: 2,
       balcony: 1,
       kitchen: 1,
+      userName: 'Tamanna Alam Tabashom',
+      userImage: 'assets/profile2.jpg',
+      postTime: DateTime.now().subtract(Duration(hours: 2, minutes: 45)),
     ),
   ];
 
@@ -57,7 +63,12 @@ class _HomeScreenState extends State<HomeScreen> {
             child: ListView.builder(
               itemCount: properties.length,
               itemBuilder: (context, index) {
-                return PropertyCard(property: properties[index]);
+                return Column(
+                  children: [
+                    _buildUserInfo(properties[index]),
+                    PropertyCard(property: properties[index]),
+                  ],
+                );
               },
             ),
           ),
@@ -65,6 +76,62 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
+  }
+
+  // User info widget (name, profile, time)
+  Widget _buildUserInfo(Property property) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundImage: AssetImage(property.userImage),
+          ),
+          SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                property.userName,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              Text(
+                _formatTime(property.postTime),
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          Spacer(),
+        ],
+      ),
+    );
+  }
+
+  // Format time to show "X min ago" or "X:XX pm/am"
+  String _formatTime(DateTime postTime) {
+    final now = DateTime.now();
+    final difference = now.difference(postTime);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} min ago';
+    } else {
+      // Format as time if less than a minute
+      final hour = postTime.hour > 12 ? postTime.hour - 12 : postTime.hour;
+      final period = postTime.hour < 12 ? 'am' : 'pm';
+      final minute = postTime.minute.toString().padLeft(2, '0');
+      return '$hour:$minute$period';
+    }
   }
 
   // App Bar
@@ -173,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<String?> showSortOptions(BuildContext context) {
     return showModalBottomSheet<String>(
       context: context,
-      shape: const RoundedRectangleBorder(
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       backgroundColor: Colors.white,
@@ -187,7 +254,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<String?> showLocationOptions(BuildContext context) {
     return showModalBottomSheet<String>(
       context: context,
-      shape: const RoundedRectangleBorder(
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       backgroundColor: Colors.white,
@@ -201,7 +268,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> showFilterOptions(BuildContext context) {
     return showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       backgroundColor: Colors.white,
