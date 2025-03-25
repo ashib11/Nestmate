@@ -35,10 +35,9 @@ dependencies:
   firebase_core: ^3.12.1
   firebase_auth: ^5.5.1
   cloud_firestore: ^5.6.5
-  fluttertoast: ^8.1.2
+
   image_picker: ^0.8.7+3
   provider: ^6.0.5
-
 
 
 
@@ -47,8 +46,6 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   gif: ^2.3.0
-  lottie: ^3.3.1
-  #image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:
@@ -72,7 +69,7 @@ flutter:
     - assets/icons/google.svg.svg
     - assets/logo.jpg
     - assets/GIF.gif
-    - assets/home.json
+
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
