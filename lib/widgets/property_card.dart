@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/property.dart';
+import '../screens/details_screen.dart'; // Correct import path // Make sure to import your DetailsScreen
 
 class PropertyCard extends StatelessWidget {
   final Property property;
@@ -31,7 +32,7 @@ class PropertyCard extends StatelessWidget {
                 SizedBox(height: 4),
                 Text(
                   property.price,
-                  style: TextStyle(fontSize: 16, color: Colors.green,fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 16, color: Colors.green, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 4),
                 Text(
@@ -65,7 +66,23 @@ class PropertyCard extends StatelessWidget {
                     ),
                     TextButton(
                       onPressed: () {
-                        // Add detail functionality here
+                        // Navigate to DetailsScreen when Details button is pressed
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DetailsScreen(
+                              title: property.location,
+                              price: property.price,
+                              availability: property.availability,
+                              imageUrl: property.imageUrl,
+                              description: property.description, // Make sure your Property model has this field
+                              bedrooms: property.bedroom,
+                              bathrooms: property.bathroom,
+                              balconies: property.balcony,
+                              kitchens: property.kitchen,
+                            ),
+                          ),
+                        );
                       },
                       style: TextButton.styleFrom(
                         backgroundColor: Colors.orange,
@@ -74,14 +91,11 @@ class PropertyCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: Center(
-                        child: Text(
-                          'Details',
-                          style: TextStyle(color: Colors.white),
-                        ),
+                      child: Text(
+                        'Details',
+                        style: TextStyle(color: Colors.white),
                       ),
                     ),
-
                     IconButton(
                       icon: Icon(Icons.favorite_border, color: Colors.deepOrange),
                       onPressed: () {
