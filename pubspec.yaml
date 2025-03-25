@@ -69,7 +69,6 @@ flutter:
     - assets/icons/google.svg.svg
     - assets/logo.jpg
     - assets/GIF.gif
-    - assets/newpost.json
     - assets/home.json
 
   # The following line ensures that the Material Icons font is
