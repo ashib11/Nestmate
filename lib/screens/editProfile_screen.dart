@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -98,17 +100,54 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  void _saveProfile() {
+  void _saveProfile() async {
+    if (_firstNameController.text.trim().length < 3 ||
+        _lastNameController.text.trim().length < 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Name must be at least 3 characters long.')),
+      );
+      return;
+    }
+
     final updatedData = {
-      'firstName': _firstNameController.text,
-      'lastName': _lastNameController.text,
-      'phone': _phoneController.text,
+      'firstName': _firstNameController.text.trim(),
+      'lastName': _lastNameController.text.trim(),
+      'phone': _phoneController.text.trim(),
       'gender': _selectedGender,
-      'image': _profileImage,
     };
-    widget.onSave(updatedData);
-    Navigator.pop(context);
+
+    // Get the current user's UID
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('User not logged in.')),
+      );
+      return;
+    }
+    final uid = user.uid;  // Use UID instead of email
+
+    final userDocRef = FirebaseFirestore.instance.collection('users').doc(uid);
+
+    try {
+      // Check if document exists
+      final docSnapshot = await userDocRef.get();
+
+      if (docSnapshot.exists) {
+        await userDocRef.update(updatedData); // Update existing document
+      } else {
+        await userDocRef.set(updatedData); // Create new document if it doesn't exist
+      }
+
+      widget.onSave(updatedData);
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update profile: ${e.toString()}')),
+      );
+    }
   }
+
+
 
   @override
   Widget build(BuildContext context) {

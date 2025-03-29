@@ -1,3 +1,4 @@
+import 'package:firestore_cache/firestore_cache.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -31,11 +32,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> fetchUserData() async {
     try {
-      DocumentSnapshot userDoc =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(widget.userID)
-              .get();
+      DocumentSnapshot<Map<String, dynamic>>
+      userDoc = await FirestoreCache.getDocument(
+        FirebaseFirestore.instance.collection('users').doc(widget.userID),
+      );
 
       if (userDoc.exists) {
         setState(() {
@@ -204,8 +204,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _buildInfoCard('Phone Number', userPhone),
           _buildInfoCard('Email Address', userEmail),
           _buildInfoCard('Gender', userGender),
-
-
         ],
       ),
     );
