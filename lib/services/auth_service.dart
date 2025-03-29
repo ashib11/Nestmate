@@ -1,17 +1,33 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+
+
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Get current user
+  // Get the current authenticated user
   User? getCurrentUser() {
     return _auth.currentUser;
   }
 
+  // Save user details to Firestore
+  Future<void> _saveUserToFirestore(String uid, String firstName, String lastName, String email) async {
+    try {
+      await _firestore.collection("users").doc(uid).set({
+        "firstName": firstName,
+        "lastName": lastName,
+        "email": email,
+        "createdAt": Timestamp.now(),
+      });
+    } catch (e) {
+      print("Firestore Save Error: $e");
+    }
+  }
+
   // Signup function
-  Future<bool> signUp(String email, String password, String fullName) async {
+  Future<User?> signUp(String email, String password, String firstName, String lastName) async {
     try {
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -20,19 +36,18 @@ class AuthService {
 
       User? user = userCredential.user;
       if (user != null) {
-        await user.updateDisplayName(fullName);
-        await _firestore.collection("users").doc(user.uid).set({
-          "fullName": fullName,
-          "email": email,
-          "createdAt": Timestamp.now(),
-        });
-
-        return true;  // Signup successful
+        await user.updateDisplayName('$firstName $lastName');
+        await _saveUserToFirestore(user.uid, firstName, lastName, email);
+        return user;
       }
-      return false; // Failed to sign up
+      return null;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'weak-password') {
+        throw "Password does not meet the requirements.";
+      }
+      throw e.message ?? "Sign up failed. Please try again.";
     } catch (e) {
-      print("Signup Error: $e");
-      return false;
+      throw "An unexpected error occurred. Please try again.";
     }
   }
 
@@ -44,7 +59,10 @@ class AuthService {
         email: email,
         password: password,
       );
+      print("This is the printed thing ");
+      print(userCredential.user);
       return userCredential.user;
+
     } catch (e) {
       print("Login Error: $e");
       return null;
@@ -69,14 +87,15 @@ class AuthService {
     }
   }
 
-  // Update user's full name
-  Future<void> updateFullName(String fullName) async {
+  // Update user's full name in Firebase Auth and Firestore
+  Future<void> updateFullName(String firstName, String lastName) async {
     try {
       User? user = _auth.currentUser;
       if (user != null) {
-        await user.updateDisplayName(fullName);
+        await user.updateDisplayName('$firstName $lastName');
         await _firestore.collection("users").doc(user.uid).update({
-          "fullName": fullName,
+          "firstName": firstName,
+          "lastName": lastName,
         });
       }
     } catch (e) {
@@ -84,7 +103,7 @@ class AuthService {
     }
   }
 
-  // Delete account function
+  // Delete user account from Firebase Auth and Firestore
   Future<void> deleteAccount() async {
     try {
       User? user = _auth.currentUser;

@@ -82,11 +82,11 @@ class _SearchScreenState extends State<SearchScreen> {
           _allProperties.where((property) {
             bool locationMatch =
                 _selectedLocation == "All" ||
-                property.location.contains(_selectedLocation);
+                    property.location.contains(_selectedLocation);
             bool priceMatch = true; // price range logic
             bool bedroomMatch =
                 _selectedBedrooms == "Any" ||
-                property.bedroom == int.tryParse(_selectedBedrooms);
+                    property.bedroom == int.tryParse(_selectedBedrooms);
             return locationMatch && priceMatch && bedroomMatch;
           }).toList();
       _showFilters = false;
@@ -144,36 +144,36 @@ class _SearchScreenState extends State<SearchScreen> {
           _buildFilterChips(),
           Expanded(
             child:
-                _filteredProperties.isEmpty
-                    ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.search_off, size: 60, color: Colors.grey),
-                          SizedBox(height: 16),
-                          Text(
-                            'No properties found',
-                            style: TextStyle(fontSize: 18, color: Colors.grey),
-                          ),
-                          if (_searchController.text.isNotEmpty)
-                            TextButton(
-                              onPressed: () {
-                                _searchController.clear();
-                                _performSearch();
-                              },
-                              child: Text('Clear search'),
-                            ),
-                        ],
-                      ),
-                    )
-                    : ListView.builder(
-                      itemCount: _filteredProperties.length,
-                      itemBuilder: (context, index) {
-                        return PropertyCard(
-                          property: _filteredProperties[index],
-                        );
+            _filteredProperties.isEmpty
+                ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.search_off, size: 60, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text(
+                    'No properties found',
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                  if (_searchController.text.isNotEmpty)
+                    TextButton(
+                      onPressed: () {
+                        _searchController.clear();
+                        _performSearch();
                       },
+                      child: Text('Clear search'),
                     ),
+                ],
+              ),
+            )
+                : ListView.builder(
+              itemCount: _filteredProperties.length,
+              itemBuilder: (context, index) {
+                return PropertyCard(
+                  property: _filteredProperties[index],
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -286,9 +286,9 @@ class _SearchScreenState extends State<SearchScreen> {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
           items:
-              items.map((item) {
-                return DropdownMenuItem(value: item, child: Text(item));
-              }).toList(),
+          items.map((item) {
+            return DropdownMenuItem(value: item, child: Text(item));
+          }).toList(),
           onChanged: onChanged,
         ),
       ],
@@ -310,32 +310,32 @@ class _SearchScreenState extends State<SearchScreen> {
       child: ListView(
         scrollDirection: Axis.horizontal,
         children:
-            activeFilters.map((filter) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: Chip(
-                  label: Text(filter),
-                  backgroundColor: Colors.green[100],
-                  deleteIcon: Icon(Icons.close, size: 16),
-                  onDeleted: () {
-                    if (filter == _selectedLocation) {
-                      setState(() {
-                        _selectedLocation = "All";
-                      });
-                    } else if (filter == _selectedPriceRange) {
-                      setState(() {
-                        _selectedPriceRange = "Any";
-                      });
-                    } else if (filter.contains('Beds')) {
-                      setState(() {
-                        _selectedBedrooms = "Any";
-                      });
-                    }
-                    _applyFilters();
-                  },
-                ),
-              );
-            }).toList(),
+        activeFilters.map((filter) {
+          return Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: Chip(
+              label: Text(filter),
+              backgroundColor: Colors.green[100],
+              deleteIcon: Icon(Icons.close, size: 16),
+              onDeleted: () {
+                if (filter == _selectedLocation) {
+                  setState(() {
+                    _selectedLocation = "All";
+                  });
+                } else if (filter == _selectedPriceRange) {
+                  setState(() {
+                    _selectedPriceRange = "Any";
+                  });
+                } else if (filter.contains('Beds')) {
+                  setState(() {
+                    _selectedBedrooms = "Any";
+                  });
+                }
+                _applyFilters();
+              },
+            ),
+          );
+        }).toList(),
       ),
     );
   }

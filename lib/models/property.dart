@@ -24,4 +24,5 @@ class Property {
     required this.userImage,
     required this.postTime,
   });
+
 }

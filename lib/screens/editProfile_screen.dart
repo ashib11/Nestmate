@@ -41,7 +41,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _lastNameController = TextEditingController(text: widget.lastName);
     _emailController = TextEditingController(text: widget.email);
     _phoneController = TextEditingController(text: widget.phone);
-    _selectedGender = widget.gender;
+    _selectedGender = widget.gender ;
+
     _profileImage = widget.currentImage;
   }
 
@@ -220,7 +221,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Widget _buildGenderDropdown() {
     return DropdownButtonFormField<String>(
-      value: _selectedGender,
+      value: _selectedGender.isNotEmpty ? _selectedGender : 'Male',
       decoration: InputDecoration(
         labelText: 'Gender',
         prefixIcon: Icon(Icons.transgender, color: Colors.green),

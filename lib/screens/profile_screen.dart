@@ -3,19 +3,62 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'editProfile_screen.dart';
 import 'favorites_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProfileScreen extends StatefulWidget {
+  final String userID;
+  const ProfileScreen({Key? key, required this.userID}) : super(key: key);
   @override
-  _ProfileScreenState createState() => _ProfileScreenState();
+  State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  String userNameFirst = "Tanvir Rahman";
-  String userNameLast = "Shuvro";
-  String userEmail = "shuvro17.rahman@gmail.com";
-  String userGender = "Male";
-  String userPhone = "01891908029";
   File? _profileImage;
+
+  Map<String, dynamic>? userData;
+  bool isLoading = true;
+  String userNameFirst = "";
+  String userNameLast = "";
+  String userEmail = "";
+  String userGender = "Other";
+  String userPhone = "NULL";
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserData();
+  }
+
+  Future<void> fetchUserData() async {
+    try {
+      DocumentSnapshot userDoc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(widget.userID)
+              .get();
+
+      if (userDoc.exists) {
+        setState(() {
+          userData = userDoc.data() as Map<String, dynamic>;
+          userNameFirst = userData?['firstName'] ?? "";
+          userNameLast = userData?['lastName'] ?? "";
+          userEmail = userData?['email'] ?? "";
+          userGender = userData?['gender'] ?? "";
+          userPhone = userData?['phone'] ?? "";
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      print("Error fetching user data: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   void _updateProfile(Map<String, dynamic> updatedData) {
     setState(() {
@@ -49,7 +92,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildProfileHeader(context),
             _buildUserInfoSection(),
             _buildPreferencesSection(),
-            _buildActionsSection(),
+            // _buildActionsSection(),
           ],
         ),
       ),
@@ -75,49 +118,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
               CircleAvatar(
                 radius: 40,
                 backgroundColor: Colors.green[100],
-                backgroundImage: _profileImage != null
-                    ? FileImage(_profileImage!)
-                    : null,
-                child: _profileImage == null
-                    ? Icon(
-                  Icons.person,
-                  size: 40,
-                  color: Colors.green[800],
-                )
-                    : null,
+                backgroundImage:
+                    _profileImage != null ? FileImage(_profileImage!) : null,
+                child:
+                    _profileImage == null
+                        ? Icon(Icons.person, size: 50, color: Colors.green[800])
+                        : null,
               ),
               GestureDetector(
                 onTap: () async {
                   final updatedData = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => EditProfileScreen(
-                        firstName: userNameFirst,
-                        lastName: userNameLast,
-                        email: userEmail,
-                        phone: userPhone,
-                        gender: userGender,
-                        currentImage: _profileImage,
-                        onSave: _updateProfile,
-                      ),
+                      builder:
+                          (context) => EditProfileScreen(
+                            firstName: userNameFirst,
+                            lastName: userNameLast,
+                            email: userEmail,
+                            phone: userPhone,
+                            gender: userGender,
+                            currentImage: _profileImage,
+                            onSave: _updateProfile,
+                          ),
                     ),
                   );
+                  if (updatedData != null) {
+                    _updateProfile(updatedData);
+                  }
                 },
                 child: Container(
                   padding: EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     color: Colors.green[800],
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white,
-                      width: 2,
-                    ),
+                    border: Border.all(color: Colors.white, width: 2),
                   ),
-                  child: Icon(
-                    Icons.edit,
-                    size: 16,
-                    color: Colors.white,
-                  ),
+                  child: Icon(Icons.edit, size: 16, color: Colors.white),
                 ),
               ),
             ],
@@ -138,10 +174,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 SizedBox(height: 5),
                 Text(
                   userEmail,
-                  style: TextStyle(
-                    color: Colors.green[600],
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(color: Colors.green[600], fontSize: 16),
                 ),
               ],
             ),
@@ -157,20 +190,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Your Information',
-            style: TextStyle(
-              color: Colors.green,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 10),
+          // Text(
+          //   'Your Information',
+          //   style: TextStyle(
+          //     color: Colors.green,
+          //     fontSize: 20,
+          //     fontWeight: FontWeight.bold,
+          //   ),
+          // ),
+          // SizedBox(height: 10),
           _buildInfoCard('First Name', userNameFirst),
           _buildInfoCard('Last Name', userNameLast),
           _buildInfoCard('Phone Number', userPhone),
           _buildInfoCard('Email Address', userEmail),
           _buildInfoCard('Gender', userGender),
+
+
         ],
       ),
     );
@@ -195,41 +230,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _buildPreferenceItem('Favourites', Icons.favorite),
           _buildPreferenceItem('Language', Icons.language),
           _buildPreferenceItem('Location', Icons.location_on),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionsSection() {
-    return Padding(
-      padding: EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Actions',
-            style: TextStyle(
-              color: Colors.green,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 10),
-          _buildActionItem('Clear Cache', Icons.cached),
-          _buildActionItem('Clear History', Icons.history),
           _buildActionItem('Logout', Icons.logout),
         ],
       ),
     );
   }
 
+  // Widget _buildActionsSection() {
+  //   return Padding(
+  //     padding: EdgeInsets.all(20),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Text(
+  //           'Actions',
+  //           style: TextStyle(
+  //             color: Colors.green,
+  //             fontSize: 20,
+  //             fontWeight: FontWeight.bold,
+  //           ),
+  //         ),
+  //         SizedBox(height: 10),
+  //         _buildActionItem('Clear Cache', Icons.cached),
+  //         _buildActionItem('Clear History', Icons.history),
+  //         _buildActionItem('Logout', Icons.logout),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   Widget _buildInfoCard(String label, String value) {
     return Card(
       elevation: 2,
       margin: EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: Padding(
         padding: EdgeInsets.all(16),
         child: Row(
@@ -237,10 +271,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Expanded(
               child: Text(
                 label,
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: Colors.grey, fontSize: 16),
               ),
             ),
             Text(
@@ -261,18 +292,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Card(
       elevation: 2,
       margin: EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: ListTile(
         leading: Icon(icon, color: Colors.green),
-        title: Text(
-          label,
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 16,
-          ),
-        ),
+        title: Text(label, style: TextStyle(color: Colors.black, fontSize: 16)),
         trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
         onTap: () {
           if (label == 'Favourites') {
@@ -290,18 +313,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Card(
       elevation: 2,
       margin: EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: ListTile(
         leading: Icon(icon, color: Colors.green),
-        title: Text(
-          label,
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 16,
-          ),
-        ),
+        title: Text(label, style: TextStyle(color: Colors.black, fontSize: 16)),
         trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
         onTap: () {},
       ),

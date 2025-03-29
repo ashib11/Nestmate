@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'forgot_password.dart';
 import 'signup_screen.dart';
@@ -36,10 +37,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       var user = await AuthService().signIn(email, password);
+
       if (user != null) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
+          MaterialPageRoute(builder: (context) => HomeScreen(user: user,),
+          ),
         );
       } else {
         setState(() {

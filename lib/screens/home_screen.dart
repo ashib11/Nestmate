@@ -1,73 +1,58 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../widgets/property_card.dart';
-import '../widgets/filter_button.dart';
-import '../widgets/sort_options_sheet.dart';
-import '../widgets/location_options_sheet.dart';
-import '../widgets/filter_options_sheet.dart';
-import '../models/property.dart';
+import 'package:maprojects/screens/category_selection.dart';
+import 'package:maprojects/screens/favorites_screen.dart';
+import 'package:maprojects/screens/profile_screen.dart';
 import 'inbox_screen.dart';
+import 'home_page.dart';
+import 'search_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
+  final User user;
+  HomeScreen({required this.user});
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  String _selectedSort = "Newest";
-  String _selectedLocation = "All";
 
-  void _onItemTapped(int index) {
+  void _navigateBottomBar(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
 
-  final List<Property> properties = [
-    Property(
-      imageUrl: 'assets/aprtmnt1.jpg.jpeg',
-      location: 'Uttara 7 no sector',
-      price: '5500 tk / month',
-      availability: 'Tolet from May',
-      bedroom: 1,
-      bathroom: 1,
-      balcony: 1,
-      kitchen: 1,
-    ),
-    Property(
-      imageUrl: 'assets/aprtmnt2.jpg.jpeg',
-      location: 'Dhanmondi 27',
-      price: '6500 tk / month',
-      availability: 'Tolet from June',
-      bedroom: 2,
-      bathroom: 2,
-      balcony: 1,
-      kitchen: 1,
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final List<Widget> _pages = [
+      UserHome(),
+      SearchScreen(),
+      CategorySelectionPage(),
+      FavoritesScreen(),
+      ProfileScreen(userID: widget.user.uid,),
+    ];
+
     return Scaffold(
       appBar: _buildAppBar(),
-      body: Column(
-        children: [
-          _buildFilterButtons(),
-          Expanded(
-            child: ListView.builder(
-              itemCount: properties.length,
-              itemBuilder: (context, index) {
-                return PropertyCard(property: properties[index]);
-              },
-            ),
-          ),
+      body: Expanded(child: _pages[_selectedIndex]),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _navigateBottomBar,
+        type: BottomNavigationBarType.fixed,
+        selectedIconTheme: IconThemeData(color: Colors.green, size: 30),
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.search_rounded), label: "Search"),
+          BottomNavigationBarItem(icon: Icon(Icons.post_add), label: "Add"),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: "Favorite"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
         ],
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
-  // App Bar
   AppBar _buildAppBar() {
     return AppBar(
       backgroundColor: Colors.white,
@@ -101,113 +86,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         SizedBox(width: 10),
       ],
-    );
-  }
-
-  // Filter Buttons (Sort, Filter, Location)
-  Widget _buildFilterButtons() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            FilterButton(
-              icon: Icons.sort,
-              label: 'Sort ($_selectedSort)',
-              onTap: () async {
-                final result = await showSortOptions(context);
-                if (result != null) {
-                  setState(() {
-                    _selectedSort = result;
-                  });
-                }
-              },
-            ),
-            FilterButton(
-              icon: Icons.filter_list,
-              label: 'Filter',
-              onTap: () async {
-                await showFilterOptions(context);
-              },
-            ),
-            FilterButton(
-              icon: Icons.location_on,
-              label: 'Location ($_selectedLocation)',
-              onTap: () async {
-                final result = await showLocationOptions(context);
-                if (result != null) {
-                  setState(() {
-                    _selectedLocation = result;
-                  });
-                }
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Bottom Navigation Bar
-  BottomNavigationBar _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      currentIndex: _selectedIndex,
-      onTap: _onItemTapped,
-      selectedItemColor: Colors.green,
-      unselectedItemColor: Colors.grey,
-      showSelectedLabels: true,
-      showUnselectedLabels: true,
-      type: BottomNavigationBarType.fixed,
-      items: [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-        BottomNavigationBarItem(icon: Icon(Icons.add_box), label: 'Add'),
-        BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favorites'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-      ],
-    );
-  }
-
-  // Show Sort Options Bottom Sheet
-  Future<String?> showSortOptions(BuildContext context) {
-    return showModalBottomSheet<String>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      backgroundColor: Colors.white,
-      builder: (context) {
-        return SortOptionsSheet(selectedSort: _selectedSort);
-      },
-    );
-  }
-
-  // Show Location Options Bottom Sheet
-  Future<String?> showLocationOptions(BuildContext context) {
-    return showModalBottomSheet<String>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      backgroundColor: Colors.white,
-      builder: (context) {
-        return LocationOptionsSheet(selectedLocation: _selectedLocation);
-      },
-    );
-  }
-
-  // Show Filter Options Bottom Sheet
-  Future<void> showFilterOptions(BuildContext context) {
-    return showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      backgroundColor: Colors.white,
-      builder: (context) {
-        return FilterOptionsSheet();
-      },
     );
   }
 }

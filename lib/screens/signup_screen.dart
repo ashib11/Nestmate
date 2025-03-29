@@ -1,5 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart'; // Import your AuthService
+import '../services/auth_service.dart';
 import '../widgets/custom_text_field.dart';
 import 'login_screen.dart';
 
@@ -9,58 +10,67 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  final TextEditingController fullNameController = TextEditingController();
+  final TextEditingController firstNameController = TextEditingController();
+  final TextEditingController lastNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
 
-  final AuthService _authService = AuthService(); // AuthService instance
+  final AuthService _authService = AuthService();
   String errorMessage = "";
 
   void _signUp() async {
-    String fullName = fullNameController.text.trim();
+    String firstName = firstNameController.text.trim();
+    String lastName = lastNameController.text.trim();
     String email = emailController.text.trim();
     String password = passwordController.text.trim();
     String confirmPassword = confirmPasswordController.text.trim();
 
-    if (fullName.isEmpty || email.isEmpty || password.isEmpty) {
-      setState(() {
-        errorMessage = "All fields are required!";
-      });
+    setState(() => errorMessage = ""); // Reset error message
+
+    // ✅ Check if all fields are filled
+    if (firstName.isEmpty || lastName.isEmpty || email.isEmpty || password.isEmpty) {
+      setState(() => errorMessage = "All fields are required!");
       return;
     }
 
+    // ✅ Check if passwords match
     if (password != confirmPassword) {
-      setState(() {
-        errorMessage = "Passwords do not match!";
-      });
+      setState(() => errorMessage = "Passwords do not match!");
       return;
     }
 
-    var user = await _authService.signUp(email, password, fullName);
-    if (user != null) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text("Success"),
-          content: Text("Account created successfully!"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
-                );
-              },
-              child: Text("OK"),
-            ),
-          ],
-        ),
-      );
-    } else {
+    try {
+      User? user = await _authService.signUp(email, password, firstName, lastName);
+
+      if (user != null) {
+        // ✅ Show success dialog
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text("Success"),
+            content: Text("Account created successfully!"),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginScreen()),
+                  );
+                },
+                child: Text("OK"),
+              ),
+            ],
+          ),
+        );
+      } else {
+        setState(() => errorMessage = "Sign-up failed. Please try again.");
+      }
+    } catch (error) {
+      // ✅ Handle Firebase errors properly
       setState(() {
-        errorMessage = "Sign up failed. Please try again.";
+        errorMessage = error is String ? error : "An unexpected error occurred.";
       });
     }
   }
@@ -79,9 +89,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 alignment: Alignment.topLeft,
                 child: IconButton(
                   icon: const Icon(Icons.arrow_back, size: 28),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
+                  onPressed: () => Navigator.pop(context),
                 ),
               ),
               const Center(
@@ -110,27 +118,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              CustomTextField(
-                hintText: "Full Name",
-                controller: fullNameController,
-              ),
+              CustomTextField(hintText: "First Name", controller: firstNameController),
               const SizedBox(height: 10),
-              CustomTextField(
-                hintText: "Email Address",
-                controller: emailController,
-              ),
+              CustomTextField(hintText: "Last Name", controller: lastNameController),
               const SizedBox(height: 10),
-              CustomTextField(
-                hintText: "Password",
-                isPassword: true,
-                controller: passwordController,
-              ),
+              CustomTextField(hintText: "Email Address", controller: emailController),
               const SizedBox(height: 10),
-              CustomTextField(
-                hintText: "Confirm Password",
-                isPassword: true,
-                controller: confirmPasswordController,
-              ),
+              CustomTextField(hintText: "Password", isPassword: true, controller: passwordController),
+              const SizedBox(height: 10),
+              CustomTextField(hintText: "Confirm Password", isPassword: true, controller: confirmPasswordController),
               const SizedBox(height: 10),
               if (errorMessage.isNotEmpty)
                 Center(
@@ -151,10 +147,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                   ),
                   onPressed: _signUp,
-                  child: const Text(
-                    "Continue",
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
+                  child: const Text("Continue", style: TextStyle(fontSize: 18, color: Colors.white)),
                 ),
               ),
               const SizedBox(height: 20),
