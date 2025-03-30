@@ -26,15 +26,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
     String password = passwordController.text.trim();
     String confirmPassword = confirmPasswordController.text.trim();
 
-    setState(() => errorMessage = ""); // Reset error message
+    setState(() => errorMessage = "");
 
-    // ✅ Check if all fields are filled
+
     if (firstName.isEmpty || lastName.isEmpty || email.isEmpty || password.isEmpty) {
       setState(() => errorMessage = "All fields are required!");
       return;
     }
 
-    // ✅ Check if passwords match
+
     if (password != confirmPassword) {
       setState(() => errorMessage = "Passwords do not match!");
       return;
@@ -44,12 +44,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
       User? user = await _authService.signUp(email, password, firstName, lastName);
 
       if (user != null) {
-        // ✅ Show success dialog
+        await user.sendEmailVerification();
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text("Success"),
-            content: Text("Account created successfully!"),
+            title: Text("Verify your email address "),
+            content: Text("A verification link has been sent to your email. Please verify your email address."),
             actions: [
               TextButton(
                 onPressed: () {
@@ -68,7 +68,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         setState(() => errorMessage = "Sign-up failed. Please try again.");
       }
     } catch (error) {
-      // ✅ Handle Firebase errors properly
+
       setState(() {
         errorMessage = error is String ? error : "An unexpected error occurred.";
       });
