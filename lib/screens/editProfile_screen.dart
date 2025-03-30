@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
@@ -10,7 +12,7 @@ class EditProfileScreen extends StatefulWidget {
   final String email;
   final String phone;
   final String gender;
-  final File? currentImage;
+  final String? currentImage;
   final Function(Map<String, dynamic>) onSave;
 
   const EditProfileScreen({
@@ -43,31 +45,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _lastNameController = TextEditingController(text: widget.lastName);
     _emailController = TextEditingController(text: widget.email);
     _phoneController = TextEditingController(text: widget.phone);
-    _selectedGender = widget.gender ;
-
-    _profileImage = widget.currentImage;
+    _selectedGender = widget.gender.isNotEmpty ? widget.gender : 'Male';
   }
 
   Future<void> _showImageSourceDialog() async {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Update Profile Picture"),
+        title: const Text("Update Profile Picture"),
         content: SingleChildScrollView(
           child: ListBody(
             children: [
               ListTile(
-                leading: Icon(Icons.photo_library, color: Colors.green),
-                title: Text('Choose from Gallery'),
+                leading: const Icon(Icons.photo_library, color: Colors.green),
+                title: const Text('Choose from Gallery'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.gallery);
                 },
               ),
-              Divider(),
+              const Divider(),
               ListTile(
-                leading: Icon(Icons.camera_alt, color: Colors.green),
-                title: Text('Take a Photo'),
+                leading: const Icon(Icons.camera_alt, color: Colors.green),
+                title: const Text('Take a Photo'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.camera);
@@ -100,44 +100,60 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  Future<String?> uploadProfilePicture(File imageFile) async {
+    const cloudName = "dvhjmuku7";
+    const uploadPreset = "profile_pic_upload";
+
+    final url = "https://api.cloudinary.com/v1_1/$cloudName/image/upload";
+    final request = http.MultipartRequest("POST", Uri.parse(url))
+      ..fields['upload_preset'] = uploadPreset
+      ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(await response.stream.bytesToString());
+      return responseData['secure_url'];
+    }
+    return null;
+  }
+
   void _saveProfile() async {
     if (_firstNameController.text.trim().length < 3 ||
         _lastNameController.text.trim().length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Name must be at least 3 characters long.')),
+        const SnackBar(content: Text('Name must be at least 3 characters long.')),
       );
       return;
     }
 
-    final updatedData = {
-      'firstName': _firstNameController.text.trim(),
-      'lastName': _lastNameController.text.trim(),
-      'phone': _phoneController.text.trim(),
-      'gender': _selectedGender,
-    };
-
-    // Get the current user's UID
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('User not logged in.')),
+        const SnackBar(content: Text('User not logged in.')),
       );
       return;
     }
-    final uid = user.uid;  // Use UID instead of email
 
+    final uid = user.uid;
     final userDocRef = FirebaseFirestore.instance.collection('users').doc(uid);
+    String? imageUrl;
 
     try {
-      // Check if document exists
-      final docSnapshot = await userDocRef.get();
-
-      if (docSnapshot.exists) {
-        await userDocRef.update(updatedData); // Update existing document
-      } else {
-        await userDocRef.set(updatedData); // Create new document if it doesn't exist
+      if (_profileImage != null) {
+        imageUrl = await uploadProfilePicture(_profileImage!);
+        if (imageUrl == null) throw Exception("Image upload failed");
       }
 
+      final updatedData = {
+        'firstName': _firstNameController.text.trim(),
+        'lastName': _lastNameController.text.trim(),
+        'phone': _phoneController.text.trim(),
+        'gender': _selectedGender,
+        'profileImageUrl': imageUrl ?? widget.currentImage,
+      };
+
+      await userDocRef.set(updatedData, SetOptions(merge: true));
       widget.onSave(updatedData);
       Navigator.pop(context);
     } catch (e) {
@@ -147,23 +163,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Edit Profile', style: TextStyle(color: Colors.white)),
+        title: const Text('Edit Profile', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.green,
         actions: [
           IconButton(
-            icon: Icon(Icons.save, color: Colors.white),
+            icon: const Icon(Icons.save, color: Colors.white),
             onPressed: _saveProfile,
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             Center(
@@ -177,40 +191,39 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       height: 120,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.green,
-                          width: 2,
-                        ),
+                        border: Border.all(color: Colors.green, width: 2),
                       ),
                       child: ClipOval(
-                        child: _profileImage != null
-                            ? Image.file(_profileImage!, fit: BoxFit.cover)
-                            : Icon(
-                          Icons.person,
-                          size: 60,
-                          color: Colors.green[800],
-                        ),
-                      ),
+                          child: _profileImage != null
+                              ? Image.file(_profileImage!, fit: BoxFit.cover)
+                              : (widget.currentImage?.isNotEmpty == true
+                              ? Image.network(
+                            widget.currentImage!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              // Show error icon if image fails to load
+                              return Icon(Icons.error, color: Colors.red);
+                            },
+                          )
+                              : Icon(Icons.person, size: 60, color: Colors.green[800]))
+                      )
                     ),
                     Container(
-                      padding: EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: Colors.green[800],
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white,
-                          width: 2,
-                        ),
+                        border: Border.all(color: Colors.white, width: 2),
                       ),
-                      child: Icon(Icons.edit, size: 16, color: Colors.white),
+                      child: const Icon(Icons.edit, size: 16, color: Colors.white),
                     ),
                   ],
                 ),
               ),
             ),
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
             _buildFormFields(),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             _buildSaveButton(),
           ],
         ),
@@ -222,13 +235,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Column(
       children: [
         _buildTextField(_firstNameController, 'First Name', Icons.person),
-        SizedBox(height: 15),
+        const SizedBox(height: 15),
         _buildTextField(_lastNameController, 'Last Name', Icons.person),
-        SizedBox(height: 15),
+        const SizedBox(height: 15),
         _buildTextField(_emailController, 'Email', Icons.email, enabled: false),
-        SizedBox(height: 15),
+        const SizedBox(height: 15),
         _buildTextField(_phoneController, 'Phone Number', Icons.phone),
-        SizedBox(height: 15),
+        const SizedBox(height: 15),
         _buildGenderDropdown(),
       ],
     );
@@ -248,11 +261,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         prefixIcon: Icon(icon, color: Colors.green),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.grey),
+          borderSide: const BorderSide(color: Colors.grey),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.green, width: 2),
+          borderSide: const BorderSide(color: Colors.green, width: 2),
         ),
       ),
     );
@@ -260,19 +273,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Widget _buildGenderDropdown() {
     return DropdownButtonFormField<String>(
-      value: _selectedGender.isNotEmpty ? _selectedGender : 'Male',
+      value: _selectedGender,
       decoration: InputDecoration(
         labelText: 'Gender',
-        prefixIcon: Icon(Icons.transgender, color: Colors.green),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        prefixIcon: const Icon(Icons.transgender, color: Colors.green),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       ),
       items: ['Male', 'Female', 'Other']
-          .map((gender) => DropdownMenuItem(
-        value: gender,
-        child: Text(gender),
-      ))
+          .map((gender) => DropdownMenuItem(value: gender, child: Text(gender)))
           .toList(),
       onChanged: (value) {
         setState(() {
@@ -289,12 +297,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         onPressed: _saveProfile,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.green,
-          padding: EdgeInsets.symmetric(vertical: 15),
+          padding: const EdgeInsets.symmetric(vertical: 15),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
         ),
-        child: Text(
+        child: const Text(
           'SAVE CHANGES',
           style: TextStyle(
             fontSize: 18,

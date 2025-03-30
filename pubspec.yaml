@@ -39,6 +39,8 @@ dependencies:
   firestore_cache: ^2.16.4
   image_picker: ^0.8.7+3
   provider: ^6.0.5
+  firebase_storage: ^12.4.4
+  http: ^1.3.0
 
 
 

@@ -1,6 +1,5 @@
 import 'package:firestore_cache/firestore_cache.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'editProfile_screen.dart';
 import 'favorites_screen.dart';
@@ -15,7 +14,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   File? _profileImage;
-
+  String? _userProfileUrl;
   Map<String, dynamic>? userData;
   bool isLoading = true;
   String userNameFirst = "";
@@ -45,6 +44,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           userEmail = userData?['email'] ?? "";
           userGender = userData?['gender'] ?? "";
           userPhone = userData?['phone'] ?? "";
+          userData?['profileImageUrl'] ?? "";
           isLoading = false;
         });
       } else {
@@ -118,12 +118,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               CircleAvatar(
                 radius: 40,
                 backgroundColor: Colors.green[100],
-                backgroundImage:
-                    _profileImage != null ? FileImage(_profileImage!) : null,
-                child:
-                    _profileImage == null
-                        ? Icon(Icons.person, size: 50, color: Colors.green[800])
-                        : null,
+                backgroundImage: _profileImage != null
+                    ? FileImage(_profileImage!) // Show locally picked image
+                    : (userData?['profileImageUrl'] != null &&
+                    userData?['profileImageUrl'].isNotEmpty
+                    ? NetworkImage(userData?['profileImageUrl']) // Show Cloudinary image
+                    : null),
+                child: (_profileImage == null &&
+                    (userData?['profileImageUrl'] == null ||
+                        userData?['profileImageUrl'].isEmpty))
+                    ? Icon(Icons.person, size: 50, color: Colors.green[800])
+                    : null,
               ),
               GestureDetector(
                 onTap: () async {
@@ -137,7 +142,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             email: userEmail,
                             phone: userPhone,
                             gender: userGender,
-                            currentImage: _profileImage,
+                            currentImage: _userProfileUrl,
                             onSave: _updateProfile,
                           ),
                     ),
