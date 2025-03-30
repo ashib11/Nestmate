@@ -44,7 +44,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           userEmail = userData?['email'] ?? "";
           userGender = userData?['gender'] ?? "";
           userPhone = userData?['phone'] ?? "";
-          userData?['profileImageUrl'] ?? "";
+          _userProfileUrl = userData?['profileImageUrl'] ?? ""; // ✅ Assign URL correctly
           isLoading = false;
         });
       } else {
@@ -66,7 +66,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       userNameLast = updatedData['lastName'] ?? userNameLast;
       userPhone = updatedData['phone'] ?? userPhone;
       userGender = updatedData['gender'] ?? userGender;
-      _profileImage = updatedData['image'] ?? _profileImage;
+      _userProfileUrl = updatedData['profileImageUrl'] ?? _userProfileUrl; // ✅ Ensure this updates
     });
   }
 
@@ -135,16 +135,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   final updatedData = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder:
-                          (context) => EditProfileScreen(
-                            firstName: userNameFirst,
-                            lastName: userNameLast,
-                            email: userEmail,
-                            phone: userPhone,
-                            gender: userGender,
-                            currentImage: _userProfileUrl,
-                            onSave: _updateProfile,
-                          ),
+                      builder: (context) => EditProfileScreen(
+                        firstName: userNameFirst,
+                        lastName: userNameLast,
+                        email: userEmail,
+                        phone: userPhone,
+                        gender: userGender,
+                        currentImage: _userProfileUrl, // ✅ Ensure correct image is passed
+                        onSave: _updateProfile,
+                      ),
                     ),
                   );
                   if (updatedData != null) {
@@ -161,6 +160,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Icon(Icons.edit, size: 16, color: Colors.white),
                 ),
               ),
+
             ],
           ),
           SizedBox(width: 20),

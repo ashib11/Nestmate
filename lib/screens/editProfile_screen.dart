@@ -37,6 +37,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late String _selectedGender;
   File? _profileImage;
   final ImagePicker _picker = ImagePicker();
+   String? _profileImageUrl;
+
 
   @override
   void initState() {
@@ -46,7 +48,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _emailController = TextEditingController(text: widget.email);
     _phoneController = TextEditingController(text: widget.phone);
     _selectedGender = widget.gender.isNotEmpty ? widget.gender : 'Male';
+    _profileImageUrl = widget.currentImage ?? '';
   }
+
 
   Future<void> _showImageSourceDialog() async {
     return showDialog(
@@ -143,25 +147,39 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (_profileImage != null) {
         imageUrl = await uploadProfilePicture(_profileImage!);
         if (imageUrl == null) throw Exception("Image upload failed");
+
+        // Update state with new image URL
+        setState(() {
+          _profileImageUrl = imageUrl;
+          _profileImage = null;
+        });
       }
 
+      // Use the updated image URL
       final updatedData = {
         'firstName': _firstNameController.text.trim(),
         'lastName': _lastNameController.text.trim(),
         'phone': _phoneController.text.trim(),
         'gender': _selectedGender,
-        'profileImageUrl': imageUrl ?? widget.currentImage,
+        'profileImageUrl': _profileImageUrl ?? widget.currentImage,
       };
 
       await userDocRef.set(updatedData, SetOptions(merge: true));
+
+      // ✅ Pass the updated image URL back to the Profile Screen
       widget.onSave(updatedData);
-      Navigator.pop(context);
+
+      Navigator.pop(context, _profileImageUrl); // Pass image URL back
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to update profile: ${e.toString()}')),
       );
     }
   }
+
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -194,19 +212,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         border: Border.all(color: Colors.green, width: 2),
                       ),
                       child: ClipOval(
-                          child: _profileImage != null
-                              ? Image.file(_profileImage!, fit: BoxFit.cover)
-                              : (widget.currentImage?.isNotEmpty == true
-                              ? Image.network(
-                            widget.currentImage!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              // Show error icon if image fails to load
-                              return Icon(Icons.error, color: Colors.red);
-                            },
-                          )
-                              : Icon(Icons.person, size: 60, color: Colors.green[800]))
-                      )
+                        child: _profileImage != null
+                            ? Image.file(_profileImage!, fit: BoxFit.cover)
+                            : (_profileImageUrl != null && _profileImageUrl!.isNotEmpty
+                            ? Image.network(
+                          _profileImageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(Icons.error, color: Colors.red);
+                          },
+                        )
+                            : Icon(Icons.person, size: 60, color: Colors.green[800])),
+                      ),
+
+
+
                     ),
                     Container(
                       padding: const EdgeInsets.all(8),
