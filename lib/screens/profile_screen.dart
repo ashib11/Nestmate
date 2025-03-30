@@ -1,9 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firestore_cache/firestore_cache.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'editProfile_screen.dart';
 import 'favorites_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String userID;
@@ -44,7 +46,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           userEmail = userData?['email'] ?? "";
           userGender = userData?['gender'] ?? "";
           userPhone = userData?['phone'] ?? "";
-          _userProfileUrl = userData?['profileImageUrl'] ?? ""; // ✅ Assign URL correctly
+          _userProfileUrl = userData?['profileImageUrl'] ?? "";
           isLoading = false;
         });
       } else {
@@ -66,7 +68,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       userNameLast = updatedData['lastName'] ?? userNameLast;
       userPhone = updatedData['phone'] ?? userPhone;
       userGender = updatedData['gender'] ?? userGender;
-      _userProfileUrl = updatedData['profileImageUrl'] ?? _userProfileUrl; // ✅ Ensure this updates
+      _userProfileUrl = updatedData['profileImageUrl'] ?? _userProfileUrl;
     });
   }
 
@@ -141,7 +143,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         email: userEmail,
                         phone: userPhone,
                         gender: userGender,
-                        currentImage: _userProfileUrl, // ✅ Ensure correct image is passed
+                        currentImage: _userProfileUrl,
                         onSave: _updateProfile,
                       ),
                     ),
@@ -213,6 +215,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+  Widget _buildActionItem(String label, IconData icon) {
+    return Card(
+      elevation: 2,
+      margin: EdgeInsets.symmetric(vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: ListTile(
+        leading: Icon(icon, color: Colors.green),
+        title: Text(label, style: TextStyle(color: Colors.black, fontSize: 16)),
+        trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
+        onTap: () {
+          if (label == 'Logout') {
+            _showLogoutConfirmationDialog();
+          }
+        },
+      ),
+    );
+  }
+  void _logout() {
+    // Example for Firebase Authentication
+    FirebaseAuth.instance.signOut().then((_) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => LoginScreen()),
+      );
+    }).catchError((error) {
+      print("Logout failed: $error");
+    });
+  }
+
+  void _showLogoutConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Logout"),
+          content: Text("Are you sure you want to log out?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                _logout();
+              },
+              child: Text("Logout", style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
   Widget _buildPreferencesSection() {
     return Padding(
@@ -231,7 +287,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           SizedBox(height: 10),
           _buildPreferenceItem('Rented Property', Icons.home),
           _buildPreferenceItem('Favourites', Icons.favorite),
-          _buildPreferenceItem('Language', Icons.language),
+          // _buildPreferenceItem('Language', Icons.language),
           _buildPreferenceItem('Location', Icons.location_on),
           _buildActionItem('Logout', Icons.logout),
         ],
@@ -239,28 +295,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Widget _buildActionsSection() {
-  //   return Padding(
-  //     padding: EdgeInsets.all(20),
-  //     child: Column(
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-  //       children: [
-  //         Text(
-  //           'Actions',
-  //           style: TextStyle(
-  //             color: Colors.green,
-  //             fontSize: 20,
-  //             fontWeight: FontWeight.bold,
-  //           ),
-  //         ),
-  //         SizedBox(height: 10),
-  //         _buildActionItem('Clear Cache', Icons.cached),
-  //         _buildActionItem('Clear History', Icons.history),
-  //         _buildActionItem('Logout', Icons.logout),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   Widget _buildInfoCard(String label, String value) {
     return Card(
@@ -312,17 +346,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildActionItem(String label, IconData icon) {
-    return Card(
-      elevation: 2,
-      margin: EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: ListTile(
-        leading: Icon(icon, color: Colors.green),
-        title: Text(label, style: TextStyle(color: Colors.black, fontSize: 16)),
-        trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
-        onTap: () {},
-      ),
-    );
-  }
 }
