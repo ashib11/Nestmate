@@ -9,8 +9,6 @@ import 'search_screen.dart';
 import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  final User user;
-  HomeScreen({required this.user});
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
@@ -31,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
       SearchScreen(),
       CategorySelectionPage(),
       FavoritesScreen(),
-      ProfileScreen(userID: widget.user.uid,),
+      ProfileScreen(userID: FirebaseAuth.instance.currentUser!.uid,),
     ];
 
     return Scaffold(

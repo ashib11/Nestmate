@@ -59,8 +59,10 @@ class AuthService {
         email: email,
         password: password,
       );
-      print("This is the printed thing ");
-      print(userCredential.user);
+      // print("This is the printed thing ");
+      // print(userCredential.user);
+      print("Current user before sign-out: ${FirebaseAuth.instance.currentUser?.uid}");
+
       return userCredential.user;
 
     } catch (e) {
