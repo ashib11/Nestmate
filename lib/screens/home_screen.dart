@@ -6,7 +6,6 @@ import 'package:maprojects/screens/profile_screen.dart';
 import 'inbox_screen.dart';
 import 'home_page.dart';
 import 'search_screen.dart';
-import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -15,6 +14,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  final User? currentUser = FirebaseAuth.instance.currentUser;
 
   void _navigateBottomBar(int index) {
     setState(() {
@@ -24,17 +24,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (currentUser == null) {
+      // Handle case where user is not logged in
+      return Scaffold(
+        body: Center(child: Text('Please log in to continue')),
+      );
+    }
+
     final List<Widget> _pages = [
       UserHome(),
       SearchScreen(),
       CategorySelectionPage(),
       FavoritesScreen(),
-      ProfileScreen(userID: FirebaseAuth.instance.currentUser!.uid,),
+      ProfileScreen(userID: currentUser!.uid),
     ];
 
     return Scaffold(
       appBar: _buildAppBar(),
-      body: Expanded(child: _pages[_selectedIndex]),
+      body: _pages[_selectedIndex], // Removed Expanded as it's not needed here
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _navigateBottomBar,
@@ -43,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
         items: [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
           BottomNavigationBarItem(icon: Icon(Icons.search_rounded), label: "Search"),
-          BottomNavigationBarItem(icon: Icon(Icons.post_add), label: "Add"),
+          BottomNavigationBarItem(icon: Icon(Icons.add_box_rounded), label: "Add"),
           BottomNavigationBarItem(icon: Icon(Icons.favorite), label: "Favorite"),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
         ],
@@ -76,10 +83,21 @@ class _HomeScreenState extends State<HomeScreen> {
         IconButton(
           icon: Icon(Icons.message, color: Colors.blue),
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => InboxScreen()),
-            );
+            final currentUser = FirebaseAuth.instance.currentUser;
+            if (currentUser != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => InboxScreen(
+                    currentUserId: currentUser.uid,  // Pass the UID
+                  ),
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Please log in to access messages')),
+              );
+            }
           },
         ),
         SizedBox(width: 10),

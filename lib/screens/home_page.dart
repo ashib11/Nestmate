@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../services/chat_service.dart';
 import '../widgets/property_card.dart';
 import '../models/property.dart';
 import '../providers/favorites_provider.dart';
@@ -9,8 +10,11 @@ import '../widgets/location_options_sheet.dart';
 import '../widgets/filter_options_sheet.dart';
 import 'login_screen.dart';
 
+
 class UserHome extends StatefulWidget {
-  const UserHome({super.key});
+   UserHome({super.key});
+
+  final ChatService _chatService = ChatService();
 
   @override
   _UserHomeState createState() => _UserHomeState();

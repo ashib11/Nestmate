@@ -33,7 +33,6 @@ class AuthService {
         email: email,
         password: password,
       );
-
       User? user = userCredential.user;
       if (user != null) {
         await user.updateDisplayName('$firstName $lastName');
@@ -49,6 +48,9 @@ class AuthService {
     } catch (e) {
       throw "An unexpected error occurred. Please try again.";
     }
+
+    //save user data
+
   }
 
 
@@ -61,7 +63,7 @@ class AuthService {
       );
       // print("This is the printed thing ");
       // print(userCredential.user);
-      print("Current user before sign-out: ${FirebaseAuth.instance.currentUser?.uid}");
+      // print("Current user before sign-out: ${FirebaseAuth.instance.currentUser?.uid}");
 
       return userCredential.user;
 
@@ -117,4 +119,5 @@ class AuthService {
       print("Delete Account Error: $e");
     }
   }
+
 }
