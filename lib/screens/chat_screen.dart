@@ -84,11 +84,14 @@ class _ChatScreenState extends State<ChatScreen> {
           foregroundColor: Colors.white,
           elevation: 0,
       ),
-      body: Column(
-        children: [
-          Expanded(child: _buildMessageList()),
-          _buildUserInput(),
-        ],
+      body: Container(
+       color:  const Color(0xFFFAF5EF),
+        child: Column(
+          children: [
+            Expanded(child: _buildMessageList()),
+            _buildUserInput(),
+          ],
+        ),
       ),
     );
   }
@@ -125,34 +128,51 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildUserInput() {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 50.0),
+      padding: const EdgeInsets.only(bottom: 10.0),
       child: Row(
         children: [
           Expanded(
             child: Container(
-              margin: EdgeInsets.symmetric(vertical: 20, horizontal: 30),
+              margin: EdgeInsets.only(left:20, bottom: 2, right: 1, top:  5),
+              padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.green[50], // Light background for contrast
+                borderRadius: BorderRadius.circular(40), // Rounded corners
+                border: Border.all(color: Colors.grey[400]!), // Subtle border
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
               child: TextField(
                 controller: _messageController,
+                maxLines: null, // Expands as user types
+                keyboardType: TextInputType.multiline, // Allows multi-line input
                 decoration: InputDecoration(
-                  hintText: "Type a message",
+                  hintText: "Type a message...",
+                  hintStyle: TextStyle(color: Colors.grey[600]),
                   border: InputBorder.none,
                 ),
               ),
             ),
           ),
           Container(
-            decoration: const BoxDecoration(
-              color: Colors.green,
-              shape: BoxShape.circle,
-            ),
-            margin: const EdgeInsets.only(right: 25),
+            // decoration: const BoxDecoration(
+            //   color: Colors.grey,
+            //   shape: BoxShape.circle,
+            // ),
+            margin: const EdgeInsets.only(left: 1,right: 6, bottom: 4,),
             child: IconButton(
               onPressed: sendMessage,
-              icon: const Icon(Icons.arrow_upward, color: Colors.white),
+              icon: const Icon(Icons.send, color: Colors.green, size: 30,),
             ),
           ),
         ],
       ),
     );
   }
+
 }

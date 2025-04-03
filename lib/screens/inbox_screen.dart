@@ -25,11 +25,17 @@ class _InboxScreenState extends State<InboxScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   late String _currentUserId;
 
-
   @override
   void initState() {
     super.initState();
     _currentUserId = _auth.currentUser?.uid ?? '';
+    // Pre-fetch user data when the screen initializes
+    _prefetchUserData();
+  }
+
+  Future<void> _prefetchUserData() async {
+    // This will cache the user stream data
+    await _chatService.getUserStream().first;
   }
 
   @override
@@ -51,7 +57,9 @@ class _InboxScreenState extends State<InboxScreen> {
           ),
         ),
       ),
-      body: _buildUserList(),
+      body: Container(
+          color: const Color(0xFFFAF5EF),
+          child: _buildUserList()),
     );
   }
 
