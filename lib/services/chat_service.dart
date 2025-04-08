@@ -6,22 +6,23 @@ class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Fetch all users WITH their UID included in the data
-  // In ChatService class
+ 
   Stream<List<Map<String, dynamic>>> getUserStream() {
     return FirebaseFirestore.instance
         .collection('users')
         .snapshots()
-        .map((snapshot) => snapshot.docs
-        .map((doc) => {
-      'uid': doc.id,
-      'firstName': doc['firstName'],
-      'lastName': doc['lastName'],
-      'email': doc['email'],
-      'profileImageUrl': doc['profileImageUrl'],
-    })
-        .toList());
+        .map((snapshot) => snapshot.docs.map((doc) {
+      final data = doc.data();
+      return {
+        'uid': doc.id,
+        'firstName': data['firstName'] ?? '',
+        'lastName': data['lastName'] ?? '',
+        'email': data['email'] ?? '',
+        'profileImageUrl': data.containsKey('profileImageUrl') ? data['profileImageUrl'] : null,
+      };
+    }).toList());
   }
+
 
   Future<void> sendMessage(String receiverID, message) async {
     final String currentUserID = _auth.currentUser!.uid;
