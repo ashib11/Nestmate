@@ -6,7 +6,7 @@ class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
- 
+
   Stream<List<Map<String, dynamic>>> getUserStream() {
     return FirebaseFirestore.instance
         .collection('users')

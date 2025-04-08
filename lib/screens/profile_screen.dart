@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firestore_cache/firestore_cache.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 import 'editProfile_screen.dart';
 import 'favorites_screen.dart';
@@ -33,34 +36,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> fetchUserData() async {
     try {
-      DocumentSnapshot<Map<String, dynamic>>
-      userDoc = await FirestoreCache.getDocument(
-        FirebaseFirestore.instance.collection('users').doc(widget.userID),
-      );
+      final prefs = await SharedPreferences.getInstance();
+      String? userDataString = prefs.getString('userData');
 
-      if (userDoc.exists) {
+      if (userDataString != null) {
+        Map<String, dynamic> localUserData = jsonDecode(userDataString);
+
         setState(() {
-          userData = userDoc.data() as Map<String, dynamic>;
+          userData = localUserData;
           userNameFirst = userData?['firstName'] ?? "";
           userNameLast = userData?['lastName'] ?? "";
           userEmail = userData?['email'] ?? "";
           userGender = userData?['gender'] ?? "";
           userPhone = userData?['phone'] ?? "";
-          _userProfileUrl = userData?['profileImageUrl'] ?? "";
+          _userProfileUrl = userData?['profileImageUrl'];
           isLoading = false;
         });
       } else {
+        // fallback if no local data
+        print('No user data found locally.');
         setState(() {
           isLoading = false;
         });
       }
     } catch (e) {
-      print("Error fetching user data: $e");
+      print("Error loading user data: $e");
       setState(() {
         isLoading = false;
       });
     }
   }
+
 
   void _updateProfile(Map<String, dynamic> updatedData) {
     setState(() {

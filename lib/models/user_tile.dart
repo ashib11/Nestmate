@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 
 class UserTile extends StatelessWidget {
   final String text;
-  final String? profileImageUrl; // Nullable if the user might not have a profile picture
+  final String? profileImageUrl;
   final void Function()? onTap;
 
   const UserTile({
     super.key,
     required this.text,
-    this.profileImageUrl, // Optional
+    this.profileImageUrl,
     required this.onTap,
   });
 

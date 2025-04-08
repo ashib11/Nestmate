@@ -1,6 +1,8 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:convert';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:maprojects/screens/wrapper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'forgot_password.dart';
 import 'signup_screen.dart';
 import 'home_screen.dart';
@@ -37,19 +39,45 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
+      // 1. Authenticate user
       var user = await AuthService().signIn(email, password);
 
-      if (user != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomeScreen(),
-          ),
-        );
-      } else {
+      if (user == null) {
         setState(() {
           _errorMessage = "Invalid email or password.";
         });
+        return;
       }
+
+      // 2. Try to get user data (but don't block login if it fails)
+      try {
+        var userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (userDoc.exists) {
+          Map<String, dynamic> userData = userDoc.data()!;
+
+          // 3. Try to save locally (but don't block login if it fails)
+          try {
+            await saveUserDataLocally(userData);
+          } catch (e) {
+            print("Warning: Failed to save user data locally: $e");
+            // Continue login anyway
+          }
+        }
+      } catch (e) {
+        print("Warning: Failed to fetch user data: $e");
+        // Continue login anyway
+      }
+
+      // 4. Proceed to home screen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomeScreen()),
+      );
+
     } catch (e) {
       setState(() {
         _errorMessage = "An error occurred. Please try again.";
@@ -58,6 +86,24 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+// Safer version of saveUserDataLocally
+  Future<void> saveUserDataLocally(Map<String, dynamic> userData) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      // Convert Timestamps to strings if present
+      final sanitizedData = userData.map((key, value) {
+        if (value is Timestamp) {
+          return MapEntry(key, value.toDate().toString());
+        }
+        return MapEntry(key, value);
+      });
+      await prefs.setString('userData', jsonEncode(sanitizedData));
+    } catch (e) {
+      print("Error saving user data: $e");
+      rethrow;
     }
   }
 
