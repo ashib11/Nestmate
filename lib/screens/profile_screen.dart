@@ -68,14 +68,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
 
-  void _updateProfile(Map<String, dynamic> updatedData) {
-    setState(() {
-      userNameFirst = updatedData['firstName'] ?? userNameFirst;
-      userNameLast = updatedData['lastName'] ?? userNameLast;
-      userPhone = updatedData['phone'] ?? userPhone;
-      userGender = updatedData['gender'] ?? userGender;
-      _userProfileUrl = updatedData['profileImageUrl'] ?? _userProfileUrl;
-    });
+  Future<void> _updateProfile(Map<String, dynamic> updatedData) async {
+    try {
+
+      setState(() {
+        userNameFirst = updatedData['firstName'] ?? userNameFirst;
+        userNameLast = updatedData['lastName'] ?? userNameLast;
+        userPhone = updatedData['phone'] ?? userPhone;
+        userGender = updatedData['gender'] ?? userGender;
+        _userProfileUrl = updatedData['profileImageUrl'] ?? _userProfileUrl;
+      });
+
+
+      final prefs = await SharedPreferences.getInstance();
+      final currentData = userData ?? {};
+      final newUserData = {
+        ...currentData,
+        ...updatedData,
+      };
+      await prefs.setString('userData', jsonEncode(newUserData));
+
+
+      await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.userID)
+        .update(updatedData);
+
+    } catch (e) {
+      print("Error updating profile cache: $e");
+    }
   }
 
   @override
