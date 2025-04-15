@@ -141,20 +141,24 @@ class _InboxScreenState extends State<InboxScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.green,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          "Inbox",
+        backgroundColor: Color(0xFFF1F8E9),
+        elevation: 2,
+        centerTitle: true,
+        title: Text(
+          'Your Inbox',
           style: TextStyle(
-            fontSize: 22,
+            color: Color(0xFF388E3C),
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            fontSize: 18,
           ),
         ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            // top: Radius.circular(28),
+              top: Radius.elliptical(28, 28)
+          ),
+        ),
+        toolbarHeight: 56,
       ),
       body: Container(
         color: const Color(0xFFFAF5EF),
