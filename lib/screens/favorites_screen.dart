@@ -11,83 +11,135 @@ class FavoritesScreen extends StatelessWidget {
     final favoriteProperties = favoritesProvider.favoriteProperties;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
-        title: Text('Favorites', style: TextStyle(color: Colors.black)),
-        backgroundColor: Colors.white,
-        elevation: 1,
-        iconTheme: IconThemeData(color: Colors.green),
+        backgroundColor: Color(0xFFF1F8E9),
+        elevation: 2,
+        centerTitle: true,
+        title: Text(
+          'Favorites',
+          style: TextStyle(
+            color: Color(0xFF388E3C),
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            // top: Radius.circular(28),
+              top: Radius.elliptical(28, 28)
+          ),
+        ),
+        toolbarHeight: 56,
       ),
       body: favoriteProperties.isEmpty
-          ? Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.favorite_border, size: 60, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'No favorites yet',
-              style: TextStyle(fontSize: 18, color: Colors.grey),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Tap the heart icon on properties to save them here',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey),
-            ),
-          ],
-        ),
-      )
+          ? _buildEmptyState()
           : ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         itemCount: favoriteProperties.length,
         itemBuilder: (context, index) {
           final property = favoriteProperties[index];
-          return Column(
-            children: [
-              _buildUserInfo(property, context),
-              PropertyCard(property: property),
-            ],
+          return Container(
+            margin: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: 2,
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                _buildUserInfo(property, context),
+                PropertyCard(property: property),
+              ],
+            ),
           );
         },
       ),
     );
   }
 
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 30),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.favorite_border, size: 80, color: Colors.grey.shade400),
+            const SizedBox(height: 20),
+            Text(
+              'No favorites yet',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Tap the heart icon on a property to add it here. Your favorites will show up on this page.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildUserInfo(Property property, BuildContext context) {
-    final favoritesProvider = Provider.of<FavoritesProvider>(context, listen: false);
+    final favoritesProvider =
+    Provider.of<FavoritesProvider>(context, listen: false);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           CircleAvatar(
-            radius: 20,
+            radius: 24,
             backgroundImage: AssetImage(property.userImage),
           ),
-          SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                property.userName,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  property.userName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
-              ),
-              Text(
-                _formatTime(property.postTime),
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 12,
+                const SizedBox(height: 2),
+                Text(
+                  _formatTime(property.postTime),
+                  style: TextStyle(
+                    color: Colors.grey.shade500,
+                    fontSize: 12,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          Spacer(),
           IconButton(
-            icon: Icon(Icons.favorite, color: Colors.red),
+            icon: const Icon(Icons.favorite_rounded, color: Colors.red),
             onPressed: () {
               favoritesProvider.removeFromFavorites(property);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Removed from favorites'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
             },
           ),
         ],
