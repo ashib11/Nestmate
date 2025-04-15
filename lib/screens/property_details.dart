@@ -132,10 +132,24 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Property Details", style: TextStyle(fontWeight: FontWeight.bold)),  // App bar title
+        backgroundColor: Color(0xFFF1F8E9),
+        elevation: 2,
         centerTitle: true,
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
+        title: Text(
+          'Add property details',
+          style: TextStyle(
+            color: Color(0xFF388E3C),
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            // top: Radius.circular(28),
+              top: Radius.elliptical(28, 28)
+          ),
+        ),
+        toolbarHeight: 56,
       ),
       body: FadeTransition(  // Apply fade animation to the body of the page
         opacity: _fadeAnimation,
