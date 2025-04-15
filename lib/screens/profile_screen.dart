@@ -127,7 +127,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Color(0xFFF1F8E9),
-        elevation: 4,
+        elevation: 2,
         centerTitle: true,
         title: Text(
           'My Profile',
@@ -138,31 +138,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+          borderRadius: BorderRadius.vertical(
+              // top: Radius.circular(28),
+              top: Radius.elliptical(28, 28)
+              ),
         ),
         toolbarHeight: 56,
       ),
 
-      body: isLoading
-          ? Center(child: CircularProgressIndicator(color: Color(0xFF2E7D32)))
-          : RefreshIndicator(
-        onRefresh: fetchUserData,
-        child: SingleChildScrollView(
-          physics: AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-          child: Column(
-            children: [
-              _buildProfileHeader(),
-              SizedBox(height: 30),
-              _sectionTitle("Personal Info"),
-              _buildUserInfoSection(),
-              SizedBox(height: 30),
-              _sectionTitle("Settings"),
-              _buildPreferencesSection(),
-            ],
+      body: Container(
+        decoration: BoxDecoration(
+          color: Color(0xFFF1F8E9),
+        ),
+        child: isLoading
+            ? Center(child: CircularProgressIndicator(color: Color(0xFF2E7D32)))
+            : RefreshIndicator(
+          onRefresh: fetchUserData,
+          child: SingleChildScrollView(
+            physics: AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            child: Column(
+              children: [
+                _buildProfileHeader(),
+                SizedBox(height: 30),
+                _sectionTitle("Personal Info"),
+                _buildUserInfoSection(),
+                SizedBox(height: 30),
+                _sectionTitle("Settings"),
+                _buildPreferencesSection(),
+              ],
+            ),
           ),
         ),
       ),
+
     );
   }
 
