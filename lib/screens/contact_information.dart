@@ -44,10 +44,24 @@ class _ContactInformationPageState extends State<ContactInformationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Contact Information", style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Color(0xFFF1F8E9),
+        elevation: 2,
         centerTitle: true,
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,  // Set icon and text color to white
+        title: Text(
+          'Provide your contact information',
+          style: TextStyle(
+            color: Color(0xFF388E3C),
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            // top: Radius.circular(28),
+              top: Radius.elliptical(28, 28)
+          ),
+        ),
+        toolbarHeight: 56,
       ),
       body: Padding(
         padding: EdgeInsets.all(16),
