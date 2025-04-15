@@ -1,18 +1,17 @@
 import 'dart:convert';
-
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firestore_cache/firestore_cache.dart';
-import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'editProfile_screen.dart';
 import 'favorites_screen.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String userID;
   const ProfileScreen({Key? key, required this.userID}) : super(key: key);
+
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
@@ -22,6 +21,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _userProfileUrl;
   Map<String, dynamic>? userData;
   bool isLoading = true;
+
   String userNameFirst = "";
   String userNameLast = "";
   String userEmail = "";
@@ -41,7 +41,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (userDataString != null) {
         Map<String, dynamic> localUserData = jsonDecode(userDataString);
-
         setState(() {
           userData = localUserData;
           userNameFirst = userData?['firstName'] ?? "";
@@ -53,8 +52,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           isLoading = false;
         });
       } else {
-        // fallback if no local data
-        print('No user data found locally.');
         setState(() {
           isLoading = false;
         });
@@ -67,10 +64,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-
   Future<void> _updateProfile(Map<String, dynamic> updatedData) async {
     try {
-
       setState(() {
         userNameFirst = updatedData['firstName'] ?? userNameFirst;
         userNameLast = updatedData['lastName'] ?? userNameLast;
@@ -78,7 +73,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         userGender = updatedData['gender'] ?? userGender;
         _userProfileUrl = updatedData['profileImageUrl'] ?? _userProfileUrl;
       });
-
 
       final prefs = await SharedPreferences.getInstance();
       final currentData = userData ?? {};
@@ -88,78 +82,112 @@ class _ProfileScreenState extends State<ProfileScreen> {
       };
       await prefs.setString('userData', jsonEncode(newUserData));
 
-
       await FirebaseFirestore.instance
-        .collection('users')
-        .doc(widget.userID)
-        .update(updatedData);
-
+          .collection('users')
+          .doc(widget.userID)
+          .update(updatedData);
     } catch (e) {
-      print("Error updating profile cache: $e");
+      print("Error updating profile: $e");
+    }
+  }
+
+  Future<void> _confirmLogout() async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Confirm Logout"),
+        content: Text("Are you sure you want to logout?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text("Logout", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLogout == true) {
+      await FirebaseAuth.instance.signOut();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginScreen()),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Color(0xFFF1F8E9),
+        elevation: 4,
+        centerTitle: true,
         title: Text(
           'My Profile',
           style: TextStyle(
-            color: Colors.white,
-            fontSize: 22,
+            color: Color(0xFF388E3C),
             fontWeight: FontWeight.bold,
+            fontSize: 18,
           ),
         ),
-        backgroundColor: Colors.green,
-        elevation: 0,
-        centerTitle: false,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+        ),
+        toolbarHeight: 56,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildProfileHeader(context),
-            _buildUserInfoSection(),
-            _buildPreferencesSection(),
-            // _buildActionsSection(),
-          ],
+
+      body: isLoading
+          ? Center(child: CircularProgressIndicator(color: Color(0xFF2E7D32)))
+          : RefreshIndicator(
+        onRefresh: fetchUserData,
+        child: SingleChildScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          child: Column(
+            children: [
+              _buildProfileHeader(),
+              SizedBox(height: 30),
+              _sectionTitle("Personal Info"),
+              _buildUserInfoSection(),
+              SizedBox(height: 30),
+              _sectionTitle("Settings"),
+              _buildPreferencesSection(),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildProfileHeader(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-        color: Colors.transparent,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Stack(
-            alignment: Alignment.bottomRight,
-            children: [
-              CircleAvatar(
-                radius: 40,
-                backgroundColor: Colors.green[100],
-                backgroundImage: _profileImage != null
-                    ? FileImage(_profileImage!) // Show locally picked image
-                    : (userData?['profileImageUrl'] != null &&
-                    userData?['profileImageUrl'].isNotEmpty
-                    ? NetworkImage(userData?['profileImageUrl']) // Show Cloudinary image
-                    : null),
-                child: (_profileImage == null &&
-                    (userData?['profileImageUrl'] == null ||
-                        userData?['profileImageUrl'].isEmpty))
-                    ? Icon(Icons.person, size: 50, color: Colors.green[800])
-                    : null,
-              ),
-              GestureDetector(
+  Widget _buildProfileHeader() {
+    return Column(
+      children: [
+        Stack(
+          children: [
+            CircleAvatar(
+              radius: 55,
+              backgroundColor: Colors.grey[200],
+              backgroundImage: _profileImage != null
+                  ? FileImage(_profileImage!)
+                  : (_userProfileUrl != null && _userProfileUrl!.isNotEmpty
+                  ? NetworkImage(_userProfileUrl!) as ImageProvider
+                  : null),
+              child: (_profileImage == null &&
+                  (_userProfileUrl == null || _userProfileUrl!.isEmpty))
+                  ? Icon(Icons.person, size: 55, color: Colors.grey)
+                  : null,
+            ),
+            Positioned(
+              bottom: 0,
+              right: 4,
+              child: GestureDetector(
                 onTap: () async {
                   final updatedData = await Navigator.push(
                     context,
@@ -179,198 +207,120 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _updateProfile(updatedData);
                   }
                 },
-                child: Container(
-                  padding: EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.green[800],
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                  child: Icon(Icons.edit, size: 16, color: Colors.white),
+                child: CircleAvatar(
+                  backgroundColor: Color(0xFF388E3C),
+                  radius: 18,
+                  child: Icon(Icons.edit, size: 18, color: Colors.white),
                 ),
               ),
-
-            ],
-          ),
-          SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$userNameFirst $userNameLast',
-                  style: TextStyle(
-                    color: Colors.green[800],
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 5),
-                Text(
-                  userEmail,
-                  style: TextStyle(color: Colors.green[600], fontSize: 16),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUserInfoSection() {
-    return Padding(
-      padding: EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Text(
-          //   'Your Information',
-          //   style: TextStyle(
-          //     color: Colors.green,
-          //     fontSize: 20,
-          //     fontWeight: FontWeight.bold,
-          //   ),
-          // ),
-          // SizedBox(height: 10),
-          _buildInfoCard('First Name', userNameFirst),
-          _buildInfoCard('Last Name', userNameLast),
-          _buildInfoCard('Phone Number', userPhone),
-          _buildInfoCard('Email Address', userEmail),
-          _buildInfoCard('Gender', userGender),
-        ],
-      ),
-    );
-  }
-  Widget _buildActionItem(String label, IconData icon) {
-    return Card(
-      elevation: 2,
-      margin: EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: ListTile(
-        leading: Icon(icon, color: Colors.green),
-        title: Text(label, style: TextStyle(color: Colors.black, fontSize: 16)),
-        trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
-        onTap: () {
-          if (label == 'Logout') {
-            _showLogoutConfirmationDialog();
-          }
-        },
-      ),
-    );
-  }
-  void _logout() {
-    // Example for Firebase Authentication
-    FirebaseAuth.instance.signOut().then((_) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => LoginScreen()),
-      );
-    }).catchError((error) {
-      print("Logout failed: $error");
-    });
-  }
-
-  void _showLogoutConfirmationDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Logout"),
-          content: Text("Are you sure you want to log out?"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () {
-                _logout();
-              },
-              child: Text("Logout", style: TextStyle(color: Colors.red)),
             ),
           ],
-        );
-      },
-    );
-  }
-
-
-  Widget _buildPreferencesSection() {
-    return Padding(
-      padding: EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Preferences',
-            style: TextStyle(
-              color: Colors.green,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+        ),
+        SizedBox(height: 16),
+        Text(
+          "$userNameFirst $userNameLast",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1B5E20),
           ),
-          SizedBox(height: 10),
-          _buildPreferenceItem('Rented Property', Icons.home),
-          _buildPreferenceItem('Favourites', Icons.favorite),
-          // _buildPreferenceItem('Language', Icons.language),
-          _buildPreferenceItem('Location', Icons.location_on),
-          _buildActionItem('Logout', Icons.logout),
-        ],
-      ),
+        ),
+        SizedBox(height: 4),
+        Text(
+          userEmail,
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey[700],
+          ),
+        ),
+      ],
     );
   }
 
-
-  Widget _buildInfoCard(String label, String value) {
-    return Card(
-      elevation: 2,
-      margin: EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+  Widget _sectionTitle(String title) {
+    return Align(
+      alignment: Alignment.centerLeft,
       child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(color: Colors.grey, fontSize: 16),
-              ),
-            ),
-            Text(
-              value,
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: Text(
+          title,
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1B5E20),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildPreferenceItem(String label, IconData icon) {
+  Widget _buildUserInfoSection() {
+    return Column(
+      children: [
+        _buildInfoCard('First Name', userNameFirst, Icons.person),
+        _buildInfoCard('Last Name', userNameLast, Icons.person_outline),
+        _buildInfoCard('Phone', userPhone, Icons.phone),
+        _buildInfoCard('Email', userEmail, Icons.email),
+        _buildInfoCard('Gender', userGender, Icons.wc),
+      ],
+    );
+  }
+
+  Widget _buildInfoCard(String title, String value, IconData icon) {
     return Card(
+      margin: EdgeInsets.symmetric(vertical: 6),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 2,
-      margin: EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: ListTile(
-        leading: Icon(icon, color: Colors.green),
-        title: Text(label, style: TextStyle(color: Colors.black, fontSize: 16)),
-        trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
-        onTap: () {
-          if (label == 'Favourites') {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => FavoritesScreen()),
-            );
-          }
-        },
+        leading: Icon(icon, color: Color(0xFF2E7D32)),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.grey[800],
+          ),
+        ),
+        subtitle: Text(
+          value,
+          style: TextStyle(
+            color: Colors.grey[600],
+            fontSize: 13,
+          ),
+        ),
       ),
     );
   }
 
+  Widget _buildPreferencesSection() {
+    return Column(
+      children: [
+        _buildPreferenceItem('Rented Property', Icons.home, () {}),
+        _buildPreferenceItem('Favourites', Icons.favorite, () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => FavoritesScreen()),
+          );
+        }),
+        _buildPreferenceItem('Location', Icons.location_on, () {}),
+        _buildPreferenceItem('Logout', Icons.logout, _confirmLogout,
+            iconColor: Colors.red),
+      ],
+    );
+  }
+
+  Widget _buildPreferenceItem(
+      String label, IconData icon, VoidCallback onTap,
+      {Color iconColor = const Color(0xFF388E3C)}) {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 2,
+      margin: EdgeInsets.symmetric(vertical: 6),
+      child: ListTile(
+        leading: Icon(icon, color: iconColor),
+        title: Text(label),
+        trailing: Icon(Icons.arrow_forward_ios, size: 16),
+        onTap: onTap,
+      ),
+    );
+  }
 }
