@@ -6,85 +6,105 @@ import '../providers/favorites_provider.dart';
 class PropertyCard extends StatelessWidget {
   final Property property;
 
-  PropertyCard({required this.property});
+  const PropertyCard({Key? key, required this.property}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final favoritesProvider = Provider.of<FavoritesProvider>(context);
 
     return Card(
-      margin: EdgeInsets.all(8.0),
+      margin: const EdgeInsets.all(8.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 4,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Image.asset(
-            property.imageUrl,
-            width: double.infinity,
-            height: 150,
-            fit: BoxFit.cover,
+          // Property Image
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: Image.asset(
+              property.imageUrl,
+              width: double.infinity,
+              height: 150,
+              fit: BoxFit.cover,
+            ),
           ),
+
+          // Property Info
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(12.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Location
                 Text(
                   property.location,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
+
+                // Price
                 Text(
                   property.price,
-                  style: TextStyle(fontSize: 16, color: Colors.green, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 16, color: Colors.green, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
+
+                // Availability
                 Text(
                   property.availability,
-                  style: TextStyle(fontSize: 14, color: Colors.red, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 14, color: Colors.red, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
+
+                // Details Summary
                 Text(
                   'Bedroom: ${property.bedroom} | Bathroom: ${property.bathroom} | Balcony: ${property.balcony} | Kitchen: ${property.kitchen}',
-                  style: TextStyle(fontSize: 14, color: Colors.black),
+                  style: const TextStyle(fontSize: 14, color: Colors.black87),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 12),
+
+                // Action Buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    // Message Button
                     TextButton(
                       onPressed: () {
-                        // Add message functionality here
+                        // TODO: Add message functionality
                       },
                       style: TextButton.styleFrom(
                         backgroundColor: Colors.green,
-                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: Text(
+                      child: const Text(
                         'Message',
                         style: TextStyle(color: Colors.white),
                       ),
                     ),
+
+                    // Details Button
                     TextButton(
                       onPressed: () {
-                        // Add detail functionality here
+                        // TODO: Add detail navigation functionality
                       },
                       style: TextButton.styleFrom(
                         backgroundColor: Colors.orange,
-                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: Center(
-                        child: Text(
-                          'Details',
-                          style: TextStyle(color: Colors.white),
-                        ),
+                      child: const Text(
+                        'Details',
+                        style: TextStyle(color: Colors.white),
                       ),
                     ),
+
+                    // Favorite Icon
                     IconButton(
                       icon: Icon(
                         favoritesProvider.isFavorite(property)
