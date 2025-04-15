@@ -9,13 +9,11 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
-  String _selectedSort = "Relevance";
   String _selectedLocation = "All";
   String _selectedPriceRange = "Any";
   String _selectedBedrooms = "Any";
   bool _showFilters = false;
 
-  // Sample property data - fixed syntax
   final List<Property> _allProperties = [
     Property(
       imageUrl: 'assets/aprtmnt1.jpg.jpeg',
@@ -43,7 +41,6 @@ class _SearchScreenState extends State<SearchScreen> {
       userImage: 'assets/profile2.jpg',
       postTime: DateTime.now().subtract(Duration(hours: 2, minutes: 45)),
     ),
-
   ];
 
   List<Property> _filteredProperties = [];
@@ -64,31 +61,42 @@ class _SearchScreenState extends State<SearchScreen> {
   void _performSearch() {
     final query = _searchController.text.toLowerCase();
     setState(() {
-      _filteredProperties =
-          _allProperties.where((property) {
-            final locationMatch = property.location.toLowerCase().contains(
-              query,
-            );
-            final priceMatch = property.price.toLowerCase().contains(query);
-            final bedroomMatch = property.bedroom.toString().contains(query);
-            return locationMatch || priceMatch || bedroomMatch;
-          }).toList();
+      _filteredProperties = _allProperties.where((property) {
+        final locationMatch = property.location.toLowerCase().contains(query);
+        final priceMatch = property.price.toLowerCase().contains(query);
+        final bedroomMatch = property.bedroom.toString().contains(query);
+        return locationMatch || priceMatch || bedroomMatch;
+      }).toList();
     });
   }
 
   void _applyFilters() {
     setState(() {
-      _filteredProperties =
-          _allProperties.where((property) {
-            bool locationMatch =
-                _selectedLocation == "All" ||
-                    property.location.contains(_selectedLocation);
-            bool priceMatch = true; // price range logic
-            bool bedroomMatch =
-                _selectedBedrooms == "Any" ||
-                    property.bedroom == int.tryParse(_selectedBedrooms);
-            return locationMatch && priceMatch && bedroomMatch;
-          }).toList();
+      _filteredProperties = _allProperties.where((property) {
+        bool locationMatch = _selectedLocation == "All" || property.location.contains(_selectedLocation);
+
+        bool priceMatch = true;
+        final price = int.tryParse(property.price.split(' ')[0]) ?? 0;
+        switch (_selectedPriceRange) {
+          case "Under 5000":
+            priceMatch = price < 5000;
+            break;
+          case "5000-10000":
+            priceMatch = price >= 5000 && price <= 10000;
+            break;
+          case "10000-20000":
+            priceMatch = price >= 10000 && price <= 20000;
+            break;
+          case "Above 20000":
+            priceMatch = price > 20000;
+            break;
+        }
+
+        bool bedroomMatch = _selectedBedrooms == "Any" ||
+            (_selectedBedrooms == "4+" ? property.bedroom >= 4 : property.bedroom == int.tryParse(_selectedBedrooms));
+
+        return locationMatch && priceMatch && bedroomMatch;
+      }).toList();
       _showFilters = false;
     });
   }
@@ -103,160 +111,106 @@ class _SearchScreenState extends State<SearchScreen> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Container(
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: TextField(
-            controller: _searchController,
-            autofocus: true,
-            keyboardType: TextInputType.text,
-            decoration: InputDecoration(
-              prefixIcon: Icon(Icons.search, color: Colors.green),
-              hintText: 'Search for properties...',
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(vertical: 10),
-            ),
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.filter_list, color: Colors.green),
-            onPressed: () {
-              setState(() {
-                _showFilters = !_showFilters;
-              });
-            },
+  Widget _buildSearchBar() {
+    return Container(
+      height: 45,
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade300,
+            offset: Offset(0, 2),
+            blurRadius: 4,
           ),
         ],
       ),
-      body: Column(
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: "Search properties...",
+          prefixIcon: Icon(Icons.search, color: Colors.green),
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterButton() {
+    return IconButton(
+      icon: Icon(_showFilters ? Icons.close : Icons.filter_list, color: Colors.green),
+      onPressed: () => setState(() => _showFilters = !_showFilters),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (_showFilters) _buildFiltersPanel(),
-          _buildFilterChips(),
-          Expanded(
-            child:
-            _filteredProperties.isEmpty
-                ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.search_off, size: 60, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
-                    'No properties found',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                  if (_searchController.text.isNotEmpty)
-                    TextButton(
-                      onPressed: () {
-                        _searchController.clear();
-                        _performSearch();
-                      },
-                      child: Text('Clear search'),
-                    ),
-                ],
-              ),
-            )
-                : ListView.builder(
-              itemCount: _filteredProperties.length,
-              itemBuilder: (context, index) {
-                return PropertyCard(
-                  property: _filteredProperties[index],
-                );
+          Icon(Icons.search_off_outlined, size: 70, color: Colors.grey),
+          SizedBox(height: 16),
+          Text("No results found", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
+          if (_searchController.text.isNotEmpty)
+            TextButton(
+              onPressed: () {
+                _searchController.clear();
+                _performSearch();
               },
-            ),
-          ),
+              child: Text("Clear Search", style: TextStyle(color: Colors.green)),
+            )
         ],
       ),
     );
   }
 
+  Widget _buildPropertyList() {
+    return ListView.builder(
+      itemCount: _filteredProperties.length,
+      itemBuilder: (context, index) => PropertyCard(property: _filteredProperties[index]),
+    );
+  }
+
   Widget _buildFiltersPanel() {
-    return Container(
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 300),
       padding: EdgeInsets.all(16),
-      color: Colors.white,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade200,
+            offset: Offset(0, 2),
+            blurRadius: 6,
+          ),
+        ],
+      ),
       child: Column(
         children: [
           _buildFilterDropdown(
             label: 'Location',
             value: _selectedLocation,
-            items: [
-              'All',
-              'Uttara',
-              'Dhanmondi',
-              'Mirpur',
-              'Gulshan',
-              'Banani',
-            ],
-            onChanged: (value) {
-              setState(() {
-                _selectedLocation = value!;
-              });
-            },
+            items: ['All', 'Uttara', 'Dhanmondi', 'Mirpur', 'Gulshan', 'Banani'],
+            onChanged: (value) => setState(() => _selectedLocation = value!),
           ),
           SizedBox(height: 16),
           _buildFilterDropdown(
             label: 'Price Range',
             value: _selectedPriceRange,
-            items: [
-              'Any',
-              'Under 5000',
-              '5000-10000',
-              '10000-20000',
-              'Above 20000',
-            ],
-            onChanged: (value) {
-              setState(() {
-                _selectedPriceRange = value!;
-              });
-            },
+            items: ['Any', 'Under 5000', '5000-10000', '10000-20000', 'Above 20000'],
+            onChanged: (value) => setState(() => _selectedPriceRange = value!),
           ),
           SizedBox(height: 16),
           _buildFilterDropdown(
             label: 'Bedrooms',
             value: _selectedBedrooms,
             items: ['Any', '1', '2', '3', '4+'],
-            onChanged: (value) {
-              setState(() {
-                _selectedBedrooms = value!;
-              });
-            },
+            onChanged: (value) => setState(() => _selectedBedrooms = value!),
           ),
           SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _resetFilters,
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    side: BorderSide(color: Colors.green),
-                  ),
-                  child: Text('Reset', style: TextStyle(color: Colors.green)),
-                ),
-              ),
-              SizedBox(width: 16),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: _applyFilters,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: Text('Apply', style: TextStyle(color: Colors.white)),
-                ),
-              ),
-            ],
-          ),
+          _buildFilterButtons(),
         ],
       ),
     );
@@ -271,25 +225,46 @@ class _SearchScreenState extends State<SearchScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.grey[700],
-          ),
-        ),
+        Text(label, style: TextStyle(fontWeight: FontWeight.w600)),
         SizedBox(height: 8),
         DropdownButtonFormField<String>(
           value: value,
           decoration: InputDecoration(
-            contentPadding: EdgeInsets.symmetric(horizontal: 12),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            contentPadding: EdgeInsets.symmetric(horizontal: 16),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
           ),
-          items:
-          items.map((item) {
-            return DropdownMenuItem(value: item, child: Text(item));
-          }).toList(),
+          items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
           onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterButtons() {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: _resetFilters,
+            style: OutlinedButton.styleFrom(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              side: BorderSide(color: Colors.green),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Text("Reset", style: TextStyle(color: Colors.green)),
+          ),
+        ),
+        SizedBox(width: 16),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: _applyFilters,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              padding: EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Text("Apply", style: TextStyle(color: Colors.white)),
+          ),
         ),
       ],
     );
@@ -299,43 +274,54 @@ class _SearchScreenState extends State<SearchScreen> {
     final activeFilters = [
       if (_selectedLocation != "All") _selectedLocation,
       if (_selectedPriceRange != "Any") _selectedPriceRange,
-      if (_selectedBedrooms != "Any") '${_selectedBedrooms} Beds',
+      if (_selectedBedrooms != "Any") "${_selectedBedrooms} Beds",
     ];
 
     if (activeFilters.isEmpty) return SizedBox();
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       height: 50,
+      padding: EdgeInsets.symmetric(horizontal: 16),
       child: ListView(
         scrollDirection: Axis.horizontal,
-        children:
-        activeFilters.map((filter) {
+        children: activeFilters.map((filter) {
           return Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: Chip(
               label: Text(filter),
-              backgroundColor: Colors.green[100],
-              deleteIcon: Icon(Icons.close, size: 16),
+              backgroundColor: Colors.green.shade100,
+              deleteIcon: Icon(Icons.close),
               onDeleted: () {
-                if (filter == _selectedLocation) {
-                  setState(() {
-                    _selectedLocation = "All";
-                  });
-                } else if (filter == _selectedPriceRange) {
-                  setState(() {
-                    _selectedPriceRange = "Any";
-                  });
-                } else if (filter.contains('Beds')) {
-                  setState(() {
-                    _selectedBedrooms = "Any";
-                  });
-                }
+                if (filter == _selectedLocation) _selectedLocation = "All";
+                else if (filter == _selectedPriceRange) _selectedPriceRange = "Any";
+                else if (filter.contains('Beds')) _selectedBedrooms = "Any";
                 _applyFilters();
               },
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        elevation: 1,
+        backgroundColor: Colors.white,
+        title: _buildSearchBar(),
+        actions: [_buildFilterButton()],
+      ),
+      body: Column(
+        children: [
+          if (_showFilters) _buildFiltersPanel(),
+          _buildFilterChips(),
+          Expanded(
+            child: _filteredProperties.isEmpty ? _buildEmptyState() : _buildPropertyList(),
+          ),
+        ],
       ),
     );
   }
